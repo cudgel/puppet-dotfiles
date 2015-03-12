@@ -29,29 +29,31 @@ define dotfiles (
     creates => $creates;
   }
 
-  exec {
-    "link ${title} dotfiles":
-      cwd      => "${real_homedir}",
-      user     => "${title}",
-      provider => shell,
-      command  => $clobber ? {
-        false => "for f in ${creates}/${dotfiles_dir}/.[^.]*; do
-                    [ ! -e \${f##*/} ] && 
-                    ln -s \$f ./ || true;
-                  done",
-        true  => "for f in ${creates}/${dotfiles_dir}/.[^.]*; do
+  if $clobber == true {
+    $clobber_cmd = "for f in ${creates}/${dotfiles_dir}/.[^.]*; do
                     if [ \"`readlink \${f##*/}`\" != \"`echo \$f`\" ]; then
                      mv \${f##*/} \${f##*/}${bak_ext};
-                     ln -fs \$f ./; 
+                     ln -fs \$f ./;
                     else
                       true;
                     fi;
-                  done",
-        },
-      unless   => $clobber ? {
-        false => "for f in ${creates}/${dotfiles_dir}/.[^.]* ; do [ -e \${f##*/} ] || exit 1; done", ## Each dotfile must merely exist
-        true  => "for f in ${creates}/${dotfiles_dir}/.[^.]* ; do [ \"`readlink \${f##*/}`\" == \"\$f\" ] || exit 1; done", ## Each dotfile must point to the file in the git project
-      },
+                  done"
+    $clobber_cond = "for f in ${creates}/${dotfiles_dir}/.[^.]* ; do [ \"`readlink \${f##*/}`\" == \"\$f\" ] || exit 1; done", ## Each dotfile must point to the file in the git project
+  } else {
+    $clobber_cmd = "for f in ${creates}/${dotfiles_dir}/.[^.]*; do
+                    [ ! -e \${f##*/} ] &&
+                    ln -s \$f ./ || true;
+                  done"
+    $clobber_cond = "for f in ${creates}/${dotfiles_dir}/.[^.]* ; do [ -e \${f##*/} ] || exit 1; done", ## Each dotfile must merely exist
+  }
+
+  exec {
+    "link ${title} dotfiles":
+      cwd      => $real_homedir,
+      user     => $title,
+      provider => shell,
+      command  => $clobber_cmd,
+      unless   => $clobber_cond,
       require  => Dotfiles::Clone["${title}"];
   }
 
