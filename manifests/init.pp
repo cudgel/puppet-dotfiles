@@ -38,13 +38,17 @@ define dotfiles (
                       true;
                     fi;
                   done"
-    $clobber_cond = "for f in ${creates}/${dotfiles_dir}/.[^.]* ; do [ \"`readlink \${f##*/}`\" == \"\$f\" ] || exit 1; done", ## Each dotfile must point to the file in the git project
+    $clobber_cond = "for f in ${creates}/${dotfiles_dir}/.[^.]* ; do
+                     [ \"`readlink \${f##*/}`\" == \"\$f\" ] || exit 1;
+                     done" ## Each dotfile must point to the file in the git project
   } else {
     $clobber_cmd = "for f in ${creates}/${dotfiles_dir}/.[^.]*; do
                     [ ! -e \${f##*/} ] &&
                     ln -s \$f ./ || true;
                   done"
-    $clobber_cond = "for f in ${creates}/${dotfiles_dir}/.[^.]* ; do [ -e \${f##*/} ] || exit 1; done", ## Each dotfile must merely exist
+    $clobber_cond = "for f in ${creates}/${dotfiles_dir}/.[^.]* ; do
+                     [ -e \${f##*/} ] || exit 1;
+                     done" ## Each dotfile must merely exist
   }
 
   exec {
@@ -54,7 +58,7 @@ define dotfiles (
       provider => shell,
       command  => $clobber_cmd,
       unless   => $clobber_cond,
-      require  => Dotfiles::Clone["${title}"];
+      require  => Dotfiles::Clone[$title];
   }
 
   dotfiles::update { $title:
@@ -64,7 +68,7 @@ define dotfiles (
     single_pull => $single_pull,
     rebase      => $rebase,
     frequency   => $frequency,
-    require     => Dotfiles::Clone["${title}"];
+    require     => Dotfiles::Clone[$title];
   }
 
 }
