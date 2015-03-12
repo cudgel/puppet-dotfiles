@@ -9,7 +9,7 @@ define dotfiles::clone(
   exec { "clone ${gituser} dotfiles for ${title}":
     cwd     => $homedir,
     command => "git clone ${giturl}/${gituser}/${project}.git --branch ${branch}",
-    path    => '/usr/bin',
+    path    => '/usr/bin:/bin',
     creates => $creates,
     user    => $title,
     require => Package['git'],

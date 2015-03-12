@@ -57,6 +57,7 @@ define dotfiles (
       user     => $title,
       provider => shell,
       command  => $clobber_cmd,
+      path     => '/usr/bin:/bin',
       unless   => $clobber_cond,
       require  => Dotfiles::Clone[$title];
   }
